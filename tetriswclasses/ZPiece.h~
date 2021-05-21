@@ -1,0 +1,13 @@
+#ifndef ZPIECE_H
+#define ZPIECE_H
+#include "TetraBase.h"
+
+class ZPiece: public TetraBase {
+ public:
+  ZPiece();
+  ~ZPiece();
+  
+ private:
+
+}
+#endif

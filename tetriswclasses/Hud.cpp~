@@ -1,0 +1,105 @@
+#include "Hud.h"
+
+Hud::Hud()
+{
+
+
+}
+
+Hud::~Hud()
+{
+}
+
+void Hud::setHudLocation(int initX, int initY, int statX, int statY)
+{
+  int statOffsetY = statY;
+  linesGraphic.setLocation(initX, initY);
+  pointsGraphic.setLocation(initX, (initY + linesGraphic.getHeight()));
+  levelGraphic.setLocation(initX, (initY + linesGraphic.getHeight() + pointsGraphic.getHeight()));
+
+  statGraphic.setLocation(statX, statOffsetY);
+  statOffsetY += statGraphic.getHeight() + Constants::TEXT_OFFSET_Y;
+  TPieceStatGraphic.setLocation(statX, statOffsetY);
+  statOffsetY += TPieceStatGraphic.getHeight();
+  LinePieceStatGraphic.setLocation(statX, statOffsetY);
+  statOffsetY += LinePieceStatGraphic.getHeight();
+  LPieceStatGraphic.setLocation(statX, statOffsetY);
+  statOffsetY += LPieceStatGraphic.getHeight();
+  JPieceStatGraphic.setLocation(statX, statOffsetY);
+  statOffsetY += JPieceStatGraphic.getHeight();
+  SPieceStatGraphic.setLocation(statX, statOffsetY);
+  statOffsetY += SPieceStatGraphic.getHeight();
+  ZPieceStatGraphic.setLocation(statX, statOffsetY);
+  statOffsetY += ZPieceStatGraphic.getHeight();
+  SquarePieceStatGraphic.setLocation(statX, statOffsetY);
+}
+
+void Hud::updateHud(SDL_Renderer* renderer, int lines, int points, int level, int* pieceStatCounter)
+{
+  std::string linesString;
+  std::string pointsString;
+  std::string levelString;
+
+  std::string statString;
+  std::string TPieceString;
+  std::string LinePieceString;
+  std::string LPieceString;
+  std::string JPieceString;
+  std::string SPieceString;
+  std::string ZPieceString;
+  std::string SquarePieceString;
+  /*test, using sstreams instead of this concatenation
+    std::stringstream linesString;
+    linesString = "Lines: " + std::to_string(lines);
+  linesString.str("");
+  linesString << "Lines: " << lines;
+  */
+  linesString = "Lines: " + std::to_string(lines);
+  pointsString = "Points: " + std::to_string(points);
+  levelString = "Level: " + std::to_string(level);
+
+  statString = "Statistics";
+  
+  TPieceString = "T-Piece: " + std::to_string(pieceStatCounter[Constants::PieceNames::TPiece]);
+
+  LinePieceString = "Line Piece: " + std::to_string(pieceStatCounter[Constants::PieceNames::LinePiece]);
+
+  LPieceString = "L-Piece: " + std::to_string(pieceStatCounter[Constants::PieceNames::LPiece]);
+
+  JPieceString = "J-Piece: " + std::to_string(pieceStatCounter[Constants::PieceNames::JPiece]);
+
+  SPieceString = "S-Piece: " + std::to_string(pieceStatCounter[Constants::PieceNames::SPiece]);
+
+  ZPieceString = "Z-Piece: " + std::to_string(pieceStatCounter[Constants::PieceNames::ZPiece]);
+
+  SquarePieceString = "Square Piece: " + std::to_string(pieceStatCounter[Constants::PieceNames::SquarePiece]);
+
+  linesGraphic.loadGraphic(linesString, renderer);
+  pointsGraphic.loadGraphic(pointsString, renderer);
+  levelGraphic.loadGraphic(levelString, renderer);
+
+  
+  statGraphic.loadGraphic(statString, renderer);
+  TPieceStatGraphic.loadGraphic(TPieceString, renderer);
+  LinePieceStatGraphic.loadGraphic(LinePieceString, renderer);
+  LPieceStatGraphic.loadGraphic(LPieceString, renderer);
+  JPieceStatGraphic.loadGraphic(JPieceString, renderer);
+  SPieceStatGraphic.loadGraphic(SPieceString, renderer);
+  ZPieceStatGraphic.loadGraphic(ZPieceString, renderer);
+  SquarePieceStatGraphic.loadGraphic(SquarePieceString, renderer);
+}
+
+void Hud::renderHud(SDL_Renderer* renderer)
+{
+  linesGraphic.render(renderer);
+  pointsGraphic.render(renderer);
+  levelGraphic.render(renderer);
+  statGraphic.render(renderer);
+  TPieceStatGraphic.render(renderer);
+  LinePieceStatGraphic.render(renderer);
+  LPieceStatGraphic.render(renderer);
+  JPieceStatGraphic.render(renderer);
+  SPieceStatGraphic.render(renderer);
+  ZPieceStatGraphic.render(renderer);
+  SquarePieceStatGraphic.render(renderer);
+}

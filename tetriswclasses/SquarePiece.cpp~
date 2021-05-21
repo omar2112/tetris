@@ -1,0 +1,41 @@
+#include "SquarePiece.h"
+
+SquarePiece::SquarePiece()
+{
+  color.r = 255;
+  color.g = 255;
+  color.b = 0;
+  color.a = 255;
+
+  coordinatesUp[0] = {1, 1};
+  coordinatesUp[1] = {2, 1};
+  coordinatesUp[2] = {1, 2};
+  coordinatesUp[3] = {2, 2};
+
+  coordinatesRight[0] = {1, 1};
+  coordinatesRight[1] = {2, 1};
+  coordinatesRight[2] = {1, 2};
+  coordinatesRight[3] = {2, 2};
+
+  coordinatesDown[0] = {1, 1};
+  coordinatesDown[1] = {2, 1};
+  coordinatesDown[2] = {1, 2};
+  coordinatesDown[3] = {2, 2};
+
+  coordinatesLeft[0] = {1, 1};
+  coordinatesLeft[1] = {2, 1};
+  coordinatesLeft[2] = {1, 2};
+  coordinatesLeft[3] = {2, 2};
+
+  placeState = State::Dropping;
+  pieceRotation = Rotation::Up;
+  pieceType = PieceType::Square_Piece;
+  startingY = 4;
+  width = 4;
+}
+
+
+
+SquarePiece::~SquarePiece()
+{
+}

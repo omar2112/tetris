@@ -1,0 +1,11 @@
+#ifndef SPIECE_H
+#define SPIECE_H
+
+class SPiece: public TetraBase {
+ public:
+  SPiece();
+  ~SPiece();
+ private:
+
+};
+#endif

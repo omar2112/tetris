@@ -1,0 +1,637 @@
+#include "game.h"
+
+Game::Game(int level)
+{
+  currentKeyStates = SDL_GetKeyboardState(NULL);
+  dasOn = false;
+  leftOrRightFrames = 0;
+  userQuit = false;
+
+  for (int i = 0; i < Constants::GRID_ROW; i++) {
+     for (int j = 0; j < Constants::GRID_COLUMN; j++) {
+       SDL_Rect gridRect = {(Constants::GRID_OFFSET_X + j*Constants::GRID_RECT_WIDTH), (Constants::GRID_OFFSET_Y + i*Constants::GRID_RECT_HEIGHT), Constants::GRID_RECT_WIDTH, Constants::GRID_RECT_HEIGHT};
+       grid[i][j] = gridRect;
+
+     }
+   }
+
+  for (int i = 0; i < Constants::GRID_ROW; i++) {
+     for (int j = 0; j < Constants::GRID_COLUMN; j++) {
+       TetraGrid[i][j] = TetraTemp;
+     }
+   }
+
+   mainWindow = SDL_CreateWindow("CuatroTris", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, Constants::WINDOW_WIDTH, Constants::WINDOW_HEIGHT, 0);
+   mainRenderer = SDL_CreateRenderer(mainWindow, -1, SDL_RENDERER_ACCELERATED);
+
+   if (SDL_Init(SDL_INIT_AUDIO ) < 0 ) {
+    printf( "SDL Audio could not initialize! SDL Error: %s\n", SDL_GetError() );
+  }
+
+   if (Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) < 0 ) {
+     printf( "SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError() );
+   }
+
+   if (TTF_Init() == -1) {
+     printf("error loading SDL_ttf! %s", TTF_GetError());
+     exit(2);
+   }
+   
+
+   //TPieceTemp = 
+   //currentRow = TPieceTemp.startingY;
+   currentRow = 4;
+   currentColumn = Constants::STARTING_X;
+
+   frameCounter = 0;
+   softDropOn = false;
+   currentDirection = Direction::Down;
+   rowsCleared[0] = -1;
+   rowsCleared[1] = -1;
+   rowsCleared[2] = -1;
+   rowsCleared[3] = -1;
+
+   levelGravity[0] = 48;
+   levelGravity[1] = 43;
+   levelGravity[2] = 38;
+   levelGravity[3] = 33;
+   levelGravity[4] = 28;
+   levelGravity[5] = 23;
+   levelGravity[6] = 18;
+   levelGravity[7] = 13;
+   levelGravity[8] = 8;
+   levelGravity[9] = 6;
+   levelGravity[10] = 5;
+   levelGravity[11] = 5;
+   levelGravity[12] = 5;
+   levelGravity[13] = 4;
+   levelGravity[14] = 4;
+   levelGravity[15] = 4;
+   levelGravity[16] = 3;
+   levelGravity[17] = 3;
+   levelGravity[18] = 3;
+   for (int i = 19; i <= 28; i++) {
+     levelGravity[i] = 2;
+   }
+   for (int i = 29; i <= 99; i++) {
+     levelGravity[i] = 1;
+   }
+   currentLevel = level;
+   numRowsCleared = 0;
+   totalLinesCleared = 0;
+   startingLevel = level;
+   levelStartLines = 0;
+   for (int i = 0; i < Constants::TOTAL_TETRAMINOS; i++) {
+     pieceStatCounter[i] = 0;
+   }
+   mainHud.updateHud(mainRenderer, totalLinesCleared, points, currentLevel, pieceStatCounter);
+   mainHud.setHudLocation((Constants::GRID_COLUMN * Constants::GRID_RECT_WIDTH + Constants::GRID_OFFSET_X), Constants::WINDOW_HEIGHT/2, Constants::GRID_OFFSET_X - 200, Constants::GRID_OFFSET_Y);
+   /*
+   TPieceCounter = 0;
+   LinePieceCounter = 0;
+   JPieceCounter = 0;
+   LPieceCounter = 0;
+   JPieceCounter = 0;
+   SPieceCounter = 0;
+   ZPieceCounter = 0;
+   SquarePieceCounter = 0;
+   */
+
+   
+}
+
+Game::~Game()
+{
+}
+
+void Game::initRandom()
+{
+  /*
+  if (randomNum == 0) {
+    TPieceTemp = LinePiece();
+    pieceStatCounter[Constants::PieceNames::LinePiece]++;
+  }
+   enum PieceNames {TPiece, LinePiece, LPiece, JPiece, SPiece, ZPiece, SquarePiece};
+
+  */
+  
+  currentTetraNum = rand() % 7;
+  nextTetraNum = rand() % 7;
+  assignTetra();
+  placeTetraminoDown();
+}
+
+void Game::assignTetra()
+{
+  if (nextTetraNum == currentTetraNum) {
+    nextTetraNum = rand() % 7;
+  }
+  
+  if (currentTetraNum == Constants::PieceNames::TPiece) {
+    TPieceTemp = TPiece();
+    pieceStatCounter[Constants::PieceNames::TPiece]++;
+  }
+  
+  if (currentTetraNum == Constants::PieceNames::LinePiece) {
+    TPieceTemp = LinePiece();
+    pieceStatCounter[Constants::PieceNames::LinePiece]++;
+  }
+
+  if (currentTetraNum == Constants::PieceNames::LPiece) {
+    TPieceTemp = LPiece();
+    pieceStatCounter[Constants::PieceNames::LPiece]++;
+  }
+
+  if (currentTetraNum == Constants::PieceNames::JPiece) {
+    TPieceTemp = JPiece();
+    pieceStatCounter[Constants::PieceNames::JPiece]++;
+  }
+
+  if (currentTetraNum == Constants::PieceNames::SPiece) {
+    TPieceTemp = SPiece();
+    pieceStatCounter[Constants::PieceNames::SPiece]++;
+  }
+
+  if (currentTetraNum == Constants::PieceNames::ZPiece) {
+    TPieceTemp = ZPiece();
+    pieceStatCounter[Constants::PieceNames::ZPiece]++;
+  }
+
+  if (currentTetraNum == Constants::PieceNames::SquarePiece) {
+    TPieceTemp = SquarePiece();
+    pieceStatCounter[Constants::PieceNames::SquarePiece]++;
+  }   
+}
+
+void Game::getNextTetra()
+{
+  currentTetraNum = nextTetraNum;
+  nextTetraNum = rand() % 7;
+  if (nextTetraNum == currentTetraNum) {
+    nextTetraNum = rand() % 7;
+  }
+  assignTetra();
+}
+
+bool Game::isNextLevel()
+{
+  if (currentLevel >= 99) {
+    return false;
+  }
+  if (currentLevel == startingLevel) {
+    if (totalLinesCleared >= ((startingLevel * 10) + 10) || totalLinesCleared >= std::max(100, ((startingLevel * 10) - 50))) {
+      levelStartLines = totalLinesCleared;
+      return true;
+    }
+  } else {
+    if ((totalLinesCleared - levelStartLines) >= 10) {
+      levelStartLines = totalLinesCleared;
+      return true;
+    }
+  }
+  return false;
+}
+
+void Game::clearRow(int row)
+{
+  for (int j = 0; j < Constants::GRID_COLUMN; j++) {
+    TetraGrid[row][j] = TetraTemp;
+  }
+}
+
+void Game::copyToRow(int initRow, int destRow)
+{
+  for (int j = 0; j < Constants::GRID_COLUMN; j++) {
+    TetraGrid[destRow][j] = TetraGrid[initRow][j];
+  }
+}
+
+bool Game::isRowEmpty(int row)
+{
+  for (int j = 0; j < Constants::GRID_COLUMN; j++) {
+    if (TetraGrid[row][j].isTetraPlaced()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool Game::didLineClear()
+{
+  int j = 0;
+  for (int i = 0; i < Constants::GRID_ROW; i++) {
+    while (j < Constants::GRID_COLUMN && TetraGrid[i][j].isTetraPlaced()) {
+      j++;
+      if (j == Constants::GRID_COLUMN) 
+	return true;
+      }
+    j = 0;
+  }
+  return false;
+}
+
+void Game::addPoints()
+{
+  if (numRowsCleared == 1) {
+    points += (40 * (currentLevel + 1));
+  }
+  if (numRowsCleared == 2) {
+    points += (100 * (currentLevel + 1));
+  }
+  if (numRowsCleared == 3) {
+    points += (300 * (currentLevel + 1));
+  }
+  if (numRowsCleared == 4) {
+    points += (1200 * (currentLevel + 1));
+  }
+}
+
+
+void Game::clearRowsAndGravity()
+{
+  int j = 0;
+  numRowsCleared = 0;
+  for (int i = Constants::GRID_ROW - 1; i > 0; i--) {
+    while (j < Constants::GRID_COLUMN && TetraGrid[i][j].isTetraPlaced()) {
+      j++;
+      if (j == Constants::GRID_COLUMN) { 
+	rowsCleared[numRowsCleared] = i;
+        numRowsCleared++;
+      }
+    }
+    j = 0;
+  }
+  totalLinesCleared += numRowsCleared;
+  
+  for (int i = 0; i < numRowsCleared; i++) {
+    clearRow(rowsCleared[i]);    
+  }
+    
+  int newRowLocation = 0;
+  for (int i = (rowsCleared[0] - 1); i >= 0; i--) {
+    newRowLocation = i + 1;
+    if (!isRowEmpty(i)) {
+      while (newRowLocation + 1 < Constants::GRID_ROW && isRowEmpty(newRowLocation + 1)) {
+	newRowLocation++;
+      }
+      copyToRow(i, newRowLocation);
+      clearRow(i);
+    }
+  }
+  
+  rowsCleared[0] = -1;
+  rowsCleared[1] = -1;
+  rowsCleared[2] = -1;
+  rowsCleared[3] = -1;
+}
+
+void Game::renderTetraGrid()
+{
+     for (int i = 0; i < Constants::GRID_ROW; i++) {
+       for (int j = 0; j < Constants::GRID_COLUMN; j++) {
+       SDL_SetRenderDrawColor(mainRenderer, TetraGrid[i][j].color.r, TetraGrid[i][j].color.g, TetraGrid[i][j].color.b, TetraGrid[i][j].color.a);
+       SDL_RenderFillRect(mainRenderer, &grid[i][j]);
+       
+       }
+     }
+
+   SDL_SetRenderDrawColor(mainRenderer, 0, 0, 0, 255);
+   for (int i = 0; i < Constants::GRID_ROW; i++) {
+     for (int j = 0; j < Constants::GRID_COLUMN; j++) {
+       SDL_RenderDrawRect(mainRenderer, &grid[i][j]);
+     }
+   }
+   SDL_RenderPresent(mainRenderer);
+}
+
+
+bool Game::gameOver()
+{
+  if (!canMoveDownOne() && currentRow <= TPieceTemp.startingY) {
+    return true;
+  }
+  if (userQuit) {
+    return true;
+  }
+  return false;
+}
+
+void Game::makeTetraminoPlaced()
+{
+  for (int i = 0; i < Constants::TETRAMINO_SIZE; i++) {
+    TetraGrid[currentRow + TPieceTemp.getCoordinates()[i].y][currentColumn + TPieceTemp.getCoordinates()[i].x].isPlaced();
+  }
+}
+
+void Game::removeCurrentTetramino()
+{
+  for (int i = 0; i < Constants::TETRAMINO_SIZE; i++) {
+    TetraGrid[currentRow + TPieceTemp.getCoordinates()[i].y][currentColumn + TPieceTemp.getCoordinates()[i].x] = TetraTemp;
+  }
+}
+
+bool Game::canMoveDownOne()
+{
+  for (int i = 0; i < Constants::TETRAMINO_SIZE; i++) {
+    if (TetraGrid[currentRow + 1 + TPieceTemp.getCoordinates()[i].y][currentColumn + TPieceTemp.getCoordinates()[i].x].getPlaceState() == TetraBase::State::Placed) {
+      return false;
+    }
+    if (TPieceTemp.getCoordinates()[i].y + currentRow + 1 >= Constants::GRID_ROW) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool Game::canPlaceTetraminoRight()
+{
+    for (int i = 0; i < Constants::TETRAMINO_SIZE; i++) {
+      if (TPieceTemp.getCoordinates()[i].x + currentColumn + 1 >= Constants::GRID_COLUMN) {
+	return false;
+      }
+      if (TetraGrid[currentRow + TPieceTemp.getCoordinates()[i].y][currentColumn + TPieceTemp.getCoordinates()[i].x + 1].getPlaceState() == TetraBase::State::Placed) {
+	return false;
+      }
+    }
+  return true;
+}
+
+bool Game::canPlaceTetraminoLeft()
+{
+  for (int i = 0; i < Constants::TETRAMINO_SIZE; i++) {
+      if (TPieceTemp.getCoordinates()[i].x + currentColumn - 1 < 0) {
+	return false;
+      }
+      if (TetraGrid[currentRow + TPieceTemp.getCoordinates()[i].y][currentColumn + TPieceTemp.getCoordinates()[i].x - 1].getPlaceState() == TetraBase::State::Placed) {
+	return false;
+      }
+    }
+  
+  return true;
+}
+
+bool Game::canPlaceTetramino()
+{
+  for (int i = 0; i < Constants::TETRAMINO_SIZE; i++) {
+    if (TPieceTemp.getCoordinates()[i].x + currentColumn >= Constants::GRID_COLUMN || (TPieceTemp.getCoordinates()[i].x + currentColumn) < 0 || TPieceTemp.getCoordinates()[i].y + currentRow > Constants::GRID_ROW) {
+      return false;
+    }
+    if (TetraGrid[currentRow + TPieceTemp.getCoordinates()[i].y][currentColumn + TPieceTemp.getCoordinates()[i].x].getPlaceState() == TetraBase::State::Placed) {
+      return false;
+    }
+  }					   
+  return true;
+}
+
+void Game::renderGame()
+{
+  SDL_RenderClear(mainRenderer);
+  for (int i = 0; i < Constants::GRID_ROW; i++) {
+    for (int j = 0; j < Constants::GRID_COLUMN; j++) {
+       SDL_SetRenderDrawColor(mainRenderer, TetraGrid[i][j].color.r, TetraGrid[i][j].color.g, TetraGrid[i][j].color.b, TetraGrid[i][j].color.a);
+       SDL_RenderFillRect(mainRenderer, &grid[i][j]);
+       
+     }
+   }
+
+   SDL_SetRenderDrawColor(mainRenderer, 0, 0, 0, 255);
+   for (int i = 0; i < Constants::GRID_ROW; i++) {
+     for (int j = 0; j < Constants::GRID_COLUMN; j++) {
+       SDL_RenderDrawRect(mainRenderer, &grid[i][j]);
+     }
+   }
+
+   mainHud.renderHud(mainRenderer);
+   SDL_RenderPresent(mainRenderer);
+}
+
+void Game::placeTetraminoDown()
+{
+
+  //if (currentDirection == Direction::Down) {
+
+  /*
+  if (currentRow + TPieceTemp.startingY >= Constants::GRID_ROW) {
+      TPieceTemp.isPlaced();
+    }
+  */
+    //}
+  for (int i = 0; i < Constants::TETRAMINO_SIZE; i++) {
+      TetraGrid[currentRow + TPieceTemp.getCoordinates()[i].y][currentColumn + TPieceTemp.getCoordinates()[i].x] = TPieceTemp;
+  }
+ 
+}
+
+void Game::handleEvents()
+{
+     while(SDL_PollEvent(&event)) {
+       if (event.type == SDL_QUIT) {
+	 userQuit = true;
+       }
+       if (event.type == SDL_KEYDOWN) {
+	 switch (event.key.keysym.sym) {
+	 case SDLK_ESCAPE:
+	   userQuit = true;
+	   break;
+	 
+         case SDLK_w:
+	  removeCurrentTetramino();
+	  TPieceTemp.rotateRight();
+	  if (canPlaceTetramino()) {  
+	    placeTetraminoDown();
+	  } else {
+	    TPieceTemp.rotateLeft();
+	    placeTetraminoDown();
+	  }
+	  break;
+
+	 case SDLK_s:
+	  removeCurrentTetramino();
+	  TPieceTemp.rotateLeft();
+	  if (canPlaceTetramino()) {  
+	    placeTetraminoDown();
+	  } else {
+	    TPieceTemp.rotateRight();
+	    placeTetraminoDown();
+	  }
+	  break;
+	 }
+       }
+     
+     
+
+       if (event.key.repeat == 0 && currentKeyStates[SDL_SCANCODE_RIGHT] ) {
+	dasOn = false;
+        leftOrRightFrames = 1;
+
+	 if (canPlaceTetraminoRight()) {
+	     removeCurrentTetramino();
+	     currentColumn++;
+	     placeTetraminoDown();
+	 }
+       }
+
+       if (event.key.repeat == 0 && currentKeyStates[SDL_SCANCODE_LEFT] ) {
+	 dasOn = false;
+	 leftOrRightFrames = 1;
+
+	 if (canPlaceTetraminoLeft()) {
+	     removeCurrentTetramino();
+	     currentColumn--;
+	     placeTetraminoDown();
+	 }
+       }
+       
+      
+       if (event.key.repeat != 0 && currentKeyStates[SDL_SCANCODE_RIGHT]) {
+	 leftOrRightFrames++;
+	 if (!dasOn && leftOrRightFrames >= 16) {
+	   dasOn = true;
+	 }
+	if (dasOn && leftOrRightFrames >= 16) {
+	  if (canPlaceTetraminoRight()) {
+	     removeCurrentTetramino();
+	     currentColumn++;
+	     placeTetraminoDown();
+	  }
+	  if (leftOrRightFrames >= 16) {
+	    leftOrRightFrames = 10;
+	  }
+	}
+       }
+
+
+        if (event.key.repeat != 0 && currentKeyStates[SDL_SCANCODE_LEFT]) {
+	  leftOrRightFrames++;
+	  if (!dasOn && leftOrRightFrames >= 16) {
+	   dasOn = true;
+	  }
+	  if (dasOn && leftOrRightFrames >= 16) {
+	    if (canPlaceTetraminoLeft()) {
+	     removeCurrentTetramino();
+	     currentColumn--;
+	     placeTetraminoDown();
+	    }
+	    if (leftOrRightFrames >= 16) {
+	      leftOrRightFrames = 10;
+	    }
+	  }
+	}
+	
+	/*
+	if (currentKeyStates[SDL_SCANCODE_S]) {
+	  removeCurrentTetramino();
+	  TPieceTemp.rotateRight();
+	  if (canPlaceTetramino()) {  
+	    placeTetraminoDown();
+	  } else {
+	    TPieceTemp.rotateLeft();
+	    placeTetraminoDown();
+	    }
+	}
+	*/
+	    
+
+	/*
+	if (currentKeyStates[SDL_SCANCODE_W]) {
+	  removeCurrentTetramino();
+	  TPieceTemp.rotateLeft();
+	  if (canPlaceTetramino()) {  
+	    placeTetraminoDown();
+	  } else {
+	    TPieceTemp.rotateRight();
+	    placeTetraminoDown();
+	  }
+	}
+	*/
+
+	if (currentKeyStates[SDL_SCANCODE_DOWN] && event.key.repeat == 0) {
+	  softDropOn = true;
+	}
+	if (!currentKeyStates[SDL_SCANCODE_DOWN]/* && event.key.state == SDL_RELEASED*/) {
+	  softDropOn = false;
+	}
+     }
+}
+
+void Game::getNewTetramino()
+{
+  int randomNum = rand() % 7;
+  if (randomNum == 0) {
+    TPieceTemp = LinePiece();
+    pieceStatCounter[Constants::PieceNames::LinePiece]++;
+  }
+  if (randomNum == 1) {
+    TPieceTemp = SquarePiece();
+    pieceStatCounter[Constants::PieceNames::SquarePiece]++;
+  }
+  if (randomNum == 2) {
+    TPieceTemp = JPiece();
+    pieceStatCounter[Constants::PieceNames::JPiece]++;
+  }
+  if (randomNum == 3) {
+    TPieceTemp = LPiece();
+    pieceStatCounter[Constants::PieceNames::LPiece]++;
+  }
+  if (randomNum == 4) {
+    TPieceTemp = SPiece();
+    pieceStatCounter[Constants::PieceNames::SPiece]++;
+  }
+  if (randomNum == 5) {
+    TPieceTemp = ZPiece();
+    pieceStatCounter[Constants::PieceNames::ZPiece]++;;
+  }
+  if (randomNum == 6) {
+    TPieceTemp = TPiece();
+    pieceStatCounter[Constants::PieceNames::TPiece]++;
+  }
+}
+
+void Game::init()
+{ 
+  getNewTetramino();
+  placeTetraminoDown();
+}
+
+void Game::update()
+{
+  if (frameCounter > levelGravity[currentLevel] || (softDropOn && (frameCounter > Constants::SOFT_DROP_GRAVITY))) {
+    if (!canMoveDownOne()) {
+      makeTetraminoPlaced();
+      currentRow = TPieceTemp.startingY;
+      currentColumn = Constants::STARTING_X;
+      //TPieceTemp = TPiece();
+      //TPieceTemp = LinePiece();
+      /*
+      int randomNum = rand() % 2;
+      if (randomNum == 0) {
+	TPieceTemp = TPiece();
+      }
+      if (randomNum == 1) {
+	TPieceTemp = LinePiece();
+      }
+      */
+      if (didLineClear()) {
+	clearRowsAndGravity();
+	addPoints();
+	if (isNextLevel()) {
+	  currentLevel++;
+	}
+      }
+      //getNewTetramino();
+      getNextTetra();
+    } else {
+      if (softDropOn) {
+	points++;
+      }
+      removeCurrentTetramino();
+      currentRow++;
+      placeTetraminoDown();
+    }
+    frameCounter = 0;
+  } else {
+    frameCounter++;
+  }
+  mainHud.updateHud(mainRenderer, totalLinesCleared, points, currentLevel, pieceStatCounter);
+}
+

@@ -1,0 +1,41 @@
+#include "LinePiece.h"
+
+LinePiece::LinePiece()
+{
+  color.r = 0;
+  color.g = 0;
+  color.b = 255;
+  color.a = 255;
+
+  coordinatesUp[0] = {2, 0};
+  coordinatesUp[1] = {2, 1};
+  coordinatesUp[2] = {2, 2};
+  coordinatesUp[3] = {2, 3};
+
+  coordinatesRight[0] = {0, 2};
+  coordinatesRight[1] = {1, 2};
+  coordinatesRight[2] = {2, 2};
+  coordinatesRight[3] = {3, 2};
+
+  coordinatesDown[0] = {2, 0};
+  coordinatesDown[1] = {2, 1};
+  coordinatesDown[2] = {2, 2};
+  coordinatesDown[3] = {2, 3};
+
+  coordinatesLeft[0] = {0, 2};
+  coordinatesLeft[1] = {1, 2};
+  coordinatesLeft[2] = {2, 2};
+  coordinatesLeft[3] = {3, 2};
+
+  placeState = State::Dropping;
+  pieceRotation = Rotation::Up;
+  pieceType = PieceType::Line_Piece;
+  startingY = 4;
+  width = 4;
+}
+
+
+
+LinePiece::~LinePiece()
+{
+}

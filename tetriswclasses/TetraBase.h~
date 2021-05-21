@@ -1,0 +1,52 @@
+#ifndef TETRABASE_H
+#define TETRABASE_H
+#include <SDL2/SDL.h>
+#include <list>
+#include <string>
+#include "constants.h"
+
+class TetraBase {
+  public:
+
+   virtual SDL_Color getColor();
+   struct Coordinate
+   {
+     int x;
+     int y;
+   };
+   enum class State {Empty, Dropping, Placed};
+   enum class Rotation {Up, Right, Down, Left};
+   enum class PieceType {T_Piece, Line_Piece, Square_Piece, S_Piece, Z_Piece, L_Piece, J_Piece, Empty};
+   State placeState;
+   Rotation pieceRotation;
+   PieceType pieceType;
+   int startingY;
+   int width;
+
+  Coordinate coordinatesUp[Constants::TETRAMINO_SIZE];
+  Coordinate coordinatesRight[Constants::TETRAMINO_SIZE];
+  Coordinate coordinatesDown[Constants::TETRAMINO_SIZE];
+  Coordinate coordinatesLeft[Constants::TETRAMINO_SIZE];
+   TetraBase();
+   ~TetraBase();
+   SDL_Color color;
+   std::string pieceName;
+   std::string getName();
+  //std::list<Coordinate> getCoordinates();
+   Coordinate *getCoordinates();
+   Rotation getRotation();
+   PieceType getPieceType();
+   State getPlaceState();
+   void isDropping();
+   void isPlaced();
+   int getWidth();
+   void rotateRight();
+   void rotateLeft();
+   void isNotPlaced();
+
+  private:
+
+
+
+};
+#endif
